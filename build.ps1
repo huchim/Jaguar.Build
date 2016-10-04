@@ -7,7 +7,9 @@ $SolutionName = "Jaguar.Core.DAL"
 $SolutionPath = Join-Path $RepositoryRoot "$SolutionName\$SolutionName.sln"
 # Directorio donde se compilará.
 $BuildRoot = Join-Path $RepositoryRoot "$SolutionName\src\$SolutionName\bin\Release"
+$BuildLog =  Join-Path $BuildRoot "Build.log"
 $MSBuildDir = Join-Path $env:systemroot  "Microsoft.NET\Framework\v4.0.30319"
+$MsBuildExe = Join-Path $MSBuildDir "MsBuild.exe"  
 
 # Determinar a dónde va esta variable.
 $BuildRoot2 = (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Definition)))
@@ -16,7 +18,12 @@ $BuildRoot2 = (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $MyInv
 Write-Host -ForegroundColor Green "RepositoryRoot: $BuildRoot"
 
 if(Test-Path $BuildRoot) {
-    del $BuildRoot
+    del $BuildRoot -Force -Recurse
+}
+
+$MSBuildResponseFile = Join-Path $BuildRoot "build.msbuild.rsp"
+if(Test-Path $MSBuildResponseFile) {
+    del $MSBuildResponseFile
 }
 
 function exec($cmd) {
@@ -32,10 +39,19 @@ function exec($cmd) {
 
 mkdir $BuildRoot | Out-Null
 
-#$BuildArgs = @{            
-#	FilePath = $MSBuildDir + "MsBuild.exe"            
-#	ArgumentList = $SlnFilePath, "/t:rebuild", ("/p:Configuration=" + $Configuration), "/v:minimal"            
-#	RedirectStandardOutput = $BuildLog            
-#	Wait = $true            
-	#WindowStyle = "Hidden"            
-#}   
+$MSBuildArguments = @"
+/nologo
+/p:OutputPath="$BuildRoot"
+/fl
+/flp:LogFile="$BuildLog";Verbosity=diagnostic;Encoding=UTF-8
+"$SolutionPath"
+"@
+
+$MSBuildArguments | Out-File -Encoding ASCII -FilePath $MSBuildResponseFile
+$args | ForEach { $_ | Out-File -Append -Encoding ASCII -FilePath $MSBuildResponseFile }
+
+Write-Host -ForegroundColor DarkGray "> msbuild $SolutionName.sln $args"
+
+& "$MSBuildDir\MSBuild.exe" `@"$MSBuildResponseFile"
+
+del $MSBuildResponseFile
