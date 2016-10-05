@@ -1,5 +1,6 @@
 ﻿# Nombre del archivo de la solución recibido desde quien ejecuta esta rutina.
 $SolutionName = $env:SOLUTION_NAME
+$ApiKey = $env:API_KEY
 
 # Directorio de la solución.
 $RepositoryRoot = Convert-Path (Get-Location)
@@ -45,8 +46,25 @@ Write-Host -ForegroundColor DarkGray "> msbuild $SolutionName.sln "
 
 del $MSBuildResponseFile
 
-if(!(Test-Path "$MainProject.nuspec")) {
-    Write-Host "$BuildRoot\NuGet.exe"
-	Write-Host -ForegroundColor DarkGray "> Creando paquete "
-	&"$BuildRoot\NuGet.exe" spec $MainProject
+Write-Host "Empacando..."
+Write-Host -ForegroundColor DarkGray "> Creando paquete "
+&"$BuildRoot\NuGet.exe" pack $MainProject -IncludeReferencedProjects -outputdirectory "$OutPutDir"
+
+Write-Host -ForegroundColor Green "Clave API: $ApiKey"
+
+if ($ApiKey) {	
+	# Ubicando paquete
+	Write-Host -ForegroundColor Green "Buscando paquete: $OutPutDir"
+	$pkgFiles = [IO.Directory]::GetFiles("$OutPutDir", "*.nupkg")
+	$pkgName = ""
+	foreach($pkg in $pkgFiles) 
+	{ 
+		Write-Host -ForegroundColor Green "> Subiendo paquete: $pkg"
+		$pkgName = $pkg
+	} 
+	
+	if ($pkgName) {
+		Write-Host -ForegroundColor Green "> Subiendo paquete: $pkgName"
+		&"$BuildRoot\NuGet.exe" push $pkgName $ApiKey -source https://www.nuget.org/api/v2/package
+	}	
 }
