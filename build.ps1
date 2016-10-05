@@ -1,6 +1,6 @@
 ﻿# Nombre del archivo de la solución recibido desde quien ejecuta esta rutina.
 $SolutionName = $env:SOLUTION_NAME
-$ApiKey = $env:API_KEY
+$ApiKey = Read-Host 'Ingrese su clave de acceso (opcional)'
 
 # Directorio de la solución.
 $RepositoryRoot = Convert-Path (Get-Location)
