@@ -22,30 +22,6 @@ if(Test-Path $OutPutDir) {
 
 mkdir $OutPutDir | Out-Null
 
-Write-Host -ForegroundColor Green "Iniciando compilación..."
-$MSBuildResponseFile = Join-Path $OutPutDir "build.msbuild.rsp"
-if(Test-Path $MSBuildResponseFile) {
-    del $MSBuildResponseFile
-}
-
-$MSBuildArguments = @"
-/nologo
-/p:OutputPath="$OutPutDir"
-/fl
-/flp:LogFile="$BuildLog";Verbosity=diagnostic;Encoding=UTF-8
-"$SolutionPath"
-"@
-
-$MSBuildArguments | Out-File -Encoding ASCII -FilePath $MSBuildResponseFile
-$args | ForEach { $_ | Out-File -Append -Encoding ASCII -FilePath $MSBuildResponseFile }
-
-Write-Host -ForegroundColor DarkGray "> msbuild $SolutionName.sln "
-
-&"$MSBuildDir\MSBuild.exe" `@"$MSBuildResponseFile"
-
-
-del $MSBuildResponseFile
-
 Write-Host "Empacando..."
 Write-Host -ForegroundColor DarkGray "> Creando paquete "
 &"$BuildRoot\NuGet.exe" pack $MainProject -IncludeReferencedProjects -outputdirectory "$OutPutDir"
