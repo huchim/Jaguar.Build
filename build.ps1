@@ -22,6 +22,8 @@ if(Test-Path $OutPutDir) {
 
 mkdir $OutPutDir | Out-Null
 
+
+
 Write-Host "Empacando..."
 Write-Host -ForegroundColor DarkGray "> Creando paquete "
 &"$BuildRoot\NuGet.exe" pack $MainProject -IncludeReferencedProjects -outputdirectory "$OutPutDir"
